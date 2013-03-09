@@ -32,6 +32,8 @@ import static griffon.util.GriffonNameUtils.*;
  */
 public final class CommandObjectUtils {
     public static final String COMMAND_OBJECT_SUFFIX = "CommandObject";
+    private static final String DEFAULT_COMMAND_OBJECT_TEMPLATE_PATH = "templates.scaffolding";
+    private static final String KEY_DEFAULT = "default";
 
     private CommandObjectUtils() {
 
@@ -66,6 +68,7 @@ public final class CommandObjectUtils {
             // com.acme.commands.MailCommandObject<suffix>
             codes.add(dot(commandObjectPackageName, commandObjectName) + suffix);
         }
+        codes.add(dot(DEFAULT_COMMAND_OBJECT_TEMPLATE_PATH, COMMAND_OBJECT_SUFFIX) + suffix);
 
         return codes.toArray(new String[codes.size()]);
     }
@@ -96,6 +99,9 @@ public final class CommandObjectUtils {
             // com.acme.commands.MailCommandObject.<property>
             codes.add(dot(commandObjectPackageName, commandObjectName, property));
         }
+        // default.<property>
+        codes.add(dot(KEY_DEFAULT, property));
+
         return codes.toArray(new String[codes.size()]);
     }
 
