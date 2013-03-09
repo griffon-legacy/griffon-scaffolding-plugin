@@ -174,7 +174,7 @@ public class CommandObjectASTTransformation extends ValidateableASTTransformatio
 
         ClassNode classNode = (ClassNode) nodes[1];
         String toolkitName = capitalize(Metadata.getCurrent().getApplicationToolkit());
-        String astTransformationClassName = getClass().getPackage() + "." + toolkitName + getClass().getSimpleName();
+        String astTransformationClassName = getClass().getPackage().getName() + "." + toolkitName + getClass().getSimpleName();
 
         if (needsValidateable(classNode, source)) {
             if (LOG.isDebugEnabled()) {
