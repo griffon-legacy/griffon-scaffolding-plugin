@@ -21,11 +21,14 @@ import griffon.core.controller.GriffonControllerAction;
 import griffon.core.controller.MissingControllerActionException;
 import griffon.exceptions.MVCGroupConfigurationException;
 import griffon.plugins.scaffolding.CommandObject;
+import griffon.plugins.scaffolding.ScaffoldingContext;
 import griffon.util.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static griffon.plugins.scaffolding.CommandObjectUtils.mvcMemberCodes;
 import static griffon.plugins.scaffolding.CommandObjectUtils.qualifyCommandObject;
@@ -37,7 +40,7 @@ import static org.codehaus.griffon.runtime.util.GriffonApplicationHelper.safeLoa
 public class CommandObjectDisplayHandler implements ApplicationHandler {
     private final Logger LOG = LoggerFactory.getLogger(CommandObjectDisplayHandler.class);
     private final GriffonApplication app;
-    private static final String DEFAULT_TEMPLATE_NAME = "griffon.plugins.scaffolding.CommandObject";
+    private final Map<String, ScaffoldingContext> contexts = new ConcurrentHashMap<String, ScaffoldingContext>();
 
     public CommandObjectDisplayHandler(GriffonApplication app) {
         this.app = app;
@@ -49,19 +52,38 @@ public class CommandObjectDisplayHandler implements ApplicationHandler {
 
     public void display(GriffonController controller, String actionName, CommandObject commandObject) {
         MVCGroupConfiguration mvcGroupConfiguration = fetchMVCGroupConfiguration(controller, actionName, commandObject);
+        ScaffoldingContext scaffoldingContext = fetchScaffoldingContext(controller, actionName, commandObject);
         MVCGroup mvcGroup = mvcGroupConfiguration.create(CollectionUtils.<String, Object>map()
-            .e("actionName", actionName)
-            .e("commandObject", commandObject));
+            .e("scaffoldingContext", scaffoldingContext));
         GriffonControllerAction showAction = app.getActionManager().actionFor(mvcGroup.getController(), "show");
-        if (showAction != null) {
-            showAction.execute();
-            mvcGroup.destroy();
-        } else {
-            if (LOG.isErrorEnabled()) {
-                LOG.error("Missing action 'show' in controller " + mvcGroupConfiguration.getMembers().get(GriffonControllerClass.TYPE));
+        try {
+            if (showAction != null) {
+                showAction.execute();
+                mvcGroup.destroy();
+            } else {
+                if (LOG.isErrorEnabled()) {
+                    LOG.error("Missing action 'show' in controller " + mvcGroupConfiguration.getMembers().get(GriffonControllerClass.TYPE));
+                }
+                throw new MissingControllerActionException(controller.getClass(), actionName);
             }
-            throw new MissingControllerActionException(controller.getClass(), actionName);
+        } finally {
+            scaffoldingContext.cleanup();
         }
+    }
+
+    private ScaffoldingContext fetchScaffoldingContext(GriffonController controller, String actionName, CommandObject commandObject) {
+        String fqCommandName = qualifyCommandObject(controller, actionName, commandObject);
+
+        ScaffoldingContext scaffoldingContext = contexts.get(fqCommandName);
+        if (scaffoldingContext == null) {
+            scaffoldingContext = new ScaffoldingContext();
+            scaffoldingContext.setActionName(actionName);
+            contexts.put(fqCommandName, scaffoldingContext);
+        }
+        scaffoldingContext.setController(controller);
+        scaffoldingContext.setValidateable(commandObject);
+
+        return scaffoldingContext;
     }
 
     private MVCGroupConfiguration fetchMVCGroupConfiguration(GriffonController controller, String actionName, CommandObject commandObject) {
@@ -112,11 +134,10 @@ public class CommandObjectDisplayHandler implements ApplicationHandler {
             if (memberClass != null) return memberClass.getName();
         }
 
-        String templateName = DEFAULT_TEMPLATE_NAME + suffix;
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("    Falling back to default template: " + templateName);
+        if (LOG.isWarnEnabled()) {
+            LOG.warn("  Could not resolve " + suffix + " member for " + qualifyCommandObject(controller, actionName, commandObject));
         }
 
-        return templateName;
+        throw new IllegalArgumentException("Could not resolve " + suffix + " member for " + qualifyCommandObject(controller, actionName, commandObject));
     }
 }
