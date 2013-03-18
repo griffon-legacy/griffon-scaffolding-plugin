@@ -23,6 +23,7 @@ import griffon.exceptions.MVCGroupConfigurationException;
 import griffon.plugins.scaffolding.CommandObject;
 import griffon.plugins.scaffolding.ScaffoldingContext;
 import griffon.util.CollectionUtils;
+import griffon.util.Metadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static griffon.plugins.scaffolding.CommandObjectUtils.mvcMemberCodes;
 import static griffon.plugins.scaffolding.CommandObjectUtils.qualifyCommandObject;
+import static griffon.util.GriffonNameUtils.capitalize;
 import static org.codehaus.griffon.runtime.util.GriffonApplicationHelper.safeLoadClass;
+import static org.codehaus.griffon.runtime.util.GriffonApplicationHelper.safeNewInstance;
 
 /**
  * @author Andres Almiray
@@ -55,6 +58,7 @@ public class CommandObjectDisplayHandler implements ApplicationHandler {
         ScaffoldingContext scaffoldingContext = fetchScaffoldingContext(controller, actionName, commandObject);
         MVCGroup mvcGroup = mvcGroupConfiguration.create(CollectionUtils.<String, Object>map()
             .e("scaffoldingContext", scaffoldingContext));
+        scaffoldingContext.setBinding(mvcGroup.getBuilder());
         GriffonControllerAction showAction = app.getActionManager().actionFor(mvcGroup.getController(), "show");
         try {
             if (showAction != null) {
@@ -67,7 +71,7 @@ public class CommandObjectDisplayHandler implements ApplicationHandler {
                 throw new MissingControllerActionException(controller.getClass(), actionName);
             }
         } finally {
-            scaffoldingContext.cleanup();
+            scaffoldingContext.dispose();
         }
     }
 
@@ -76,7 +80,7 @@ public class CommandObjectDisplayHandler implements ApplicationHandler {
 
         ScaffoldingContext scaffoldingContext = contexts.get(fqCommandName);
         if (scaffoldingContext == null) {
-            scaffoldingContext = new ScaffoldingContext();
+            scaffoldingContext = newScaffoldingContext();
             scaffoldingContext.setActionName(actionName);
             contexts.put(fqCommandName, scaffoldingContext);
         }
@@ -84,6 +88,13 @@ public class CommandObjectDisplayHandler implements ApplicationHandler {
         scaffoldingContext.setValidateable(commandObject);
 
         return scaffoldingContext;
+    }
+
+    private ScaffoldingContext newScaffoldingContext() {
+        String toolkitName = capitalize(Metadata.getCurrent().getApplicationToolkit());
+        String className = ScaffoldingContext.class.getPackage().getName() + "." + toolkitName + ScaffoldingContext.class.getSimpleName();
+        Class contextClass = safeLoadClass(className);
+        return (ScaffoldingContext) safeNewInstance(contextClass);
     }
 
     private MVCGroupConfiguration fetchMVCGroupConfiguration(GriffonController controller, String actionName, CommandObject commandObject) {

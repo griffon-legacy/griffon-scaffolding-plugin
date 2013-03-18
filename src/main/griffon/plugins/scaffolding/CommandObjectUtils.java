@@ -20,23 +20,124 @@ import griffon.core.GriffonController;
 import griffon.core.GriffonControllerClass;
 import griffon.core.controller.GriffonControllerActionManager;
 import griffon.core.i18n.NoSuchMessageException;
+import griffon.plugins.scaffolding.atoms.*;
+import griffon.plugins.scaffolding.atoms.StringValue;
 import griffon.plugins.validation.constraints.ConstrainedProperty;
-import griffon.util.GriffonNameUtils;
+import griffon.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.URL;
+import java.util.*;
 
+import static griffon.util.GriffonExceptionHandler.sanitize;
 import static griffon.util.GriffonNameUtils.*;
+import static org.codehaus.groovy.runtime.ResourceGroovyMethods.eachLine;
 
 /**
  * @author Andres Almiray
  */
 public final class CommandObjectUtils {
+    private static final Logger LOG = LoggerFactory.getLogger(CommandObjectUtils.class);
+
     public static final String COMMAND_OBJECT_SUFFIX = "CommandObject";
     private static final String DEFAULT_APPLICATION_TEMPLATE_PATH = "templates.scaffolding";
     private static final String DEFAULT_TEMPLATE_PATH = "griffon.plugins.scaffolding.templates";
     private static final String KEY_DEFAULT = "default";
     private static final String KEY_TEMPLATE = "Template";
+
+    private static Map<Class, Class> SUPPORTED_ATOM_TYPES = CollectionUtils.<Class, Class>map()
+        .e(BigDecimal.class, BigDecimalValue.class)
+        .e(BigInteger.class, BigIntegerValue.class)
+        .e(Boolean.class, BooleanValue.class)
+        .e(Byte.class, ByteValue.class)
+        .e(Calendar.class, CalendarValue.class)
+        .e(Date.class, DateValue.class)
+        .e(Double.class, DoubleValue.class)
+        .e(Float.class, FloatValue.class)
+        .e(Integer.class, IntegerValue.class)
+        .e(Long.class, LongValue.class)
+        .e(Short.class, ShortValue.class)
+        .e(String.class, StringValue.class)
+        .e(Boolean.TYPE, BooleanValue.class)
+        .e(Byte.TYPE, ByteValue.class)
+        .e(Double.TYPE, DoubleValue.class)
+        .e(Float.TYPE, FloatValue.class)
+        .e(Integer.TYPE, IntegerValue.class)
+        .e(Long.TYPE, LongValue.class)
+        .e(Short.TYPE, ShortValue.class);
+
+    public static Map<Class, Class> initializeAtomTypes() {
+        Enumeration<URL> urls = null;
+
+        try {
+            urls = ApplicationClassLoader.get().getResources("META-INF/services/" + AtomicValue.class.getName());
+        } catch (IOException ioe) {
+            return SUPPORTED_ATOM_TYPES;
+        }
+
+        if (urls == null) return SUPPORTED_ATOM_TYPES;
+
+        while (urls.hasMoreElements()) {
+            URL url = urls.nextElement();
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Reading " + AtomicValue.class.getName() + " definitions from " + url);
+            }
+
+            try {
+                eachLine(url, new RunnableWithArgsClosure(new RunnableWithArgs() {
+                    @Override
+                    public void run(Object[] args) {
+                        String line = (String) args[0];
+                        if (line.startsWith("#") || isBlank(line)) return;
+                        try {
+                            String[] parts = line.trim().split("=");
+                            Class targetType = loadClass(parts[0].trim());
+                            Class atomicValueClass = loadClass(parts[1].trim());
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Registering " + atomicValueClass.getName() + " as AtomicValue for " + targetType.getName());
+                            }
+                            SUPPORTED_ATOM_TYPES.put(targetType, atomicValueClass);
+                        } catch (Exception e) {
+                            if (LOG.isWarnEnabled()) {
+                                LOG.warn("Could not load AtomicValue with " + line, sanitize(e));
+                            }
+                        }
+                    }
+                }));
+            } catch (IOException e) {
+                if (LOG.isWarnEnabled()) {
+                    LOG.warn("Could not load AtomicValue definitions from " + url, sanitize(e));
+                }
+            }
+        }
+
+        return SUPPORTED_ATOM_TYPES;
+    }
+
+    private static Class<?> loadClass(String className) throws ClassNotFoundException {
+        ClassNotFoundException cnfe = null;
+
+        ClassLoader cl = CommandObjectUtils.class.getClassLoader();
+        try {
+            return cl.loadClass(className);
+        } catch (ClassNotFoundException e) {
+            cnfe = e;
+        }
+
+        cl = Thread.currentThread().getContextClassLoader();
+        try {
+            return cl.loadClass(className);
+        } catch (ClassNotFoundException e) {
+            cnfe = e;
+        }
+
+        if (cnfe != null) throw cnfe;
+        return null;
+    }
 
     private CommandObjectUtils() {
 
@@ -131,7 +232,9 @@ public final class CommandObjectUtils {
         String commandObjectPackageName = commandObject.getClass().getPackage().getName();
 
         property = capitalize(property);
-        String propertyType = capitalize(getLogicalPropertyName(constrainedProperty.getPropertyType().getSimpleName(), "Value"));
+        String simpleType = constrainedProperty.getPropertyType().getSimpleName();
+        if ("int".equals(simpleType)) simpleType = "integer";
+        String propertyType = capitalize(getLogicalPropertyName(simpleType, "Value"));
 
         List<String> templates = new ArrayList<String>();
         // com.acme.mail.sendmail.mail.<property>Template

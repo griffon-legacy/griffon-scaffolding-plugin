@@ -18,30 +18,14 @@ package griffon.plugins.scaffolding.atoms;
 /**
  * @author Andres Almiray
  */
-public class BooleanValue extends AbstractPrimitiveAtomicValue {
-    public BooleanValue() {
+public abstract class AbstractPrimitiveAtomicValue extends AbstractAtomicValue {
+    private boolean primitive;
+
+    public boolean isPrimitive() {
+        return primitive;
     }
 
-    public BooleanValue(Boolean arg) {
-        setValue(arg);
-    }
-
-    public Boolean booleanValue() {
-        return (Boolean) value;
-    }
-
-    @Override
-    public void setValue(Object value) {
-        if (value == null) {
-            super.setValue(isPrimitive() ? false : null);
-        } else if (value instanceof Boolean) {
-            super.setValue(value);
-        } else {
-            throw new IllegalArgumentException("Invalid value " + value);
-        }
-    }
-
-    public Class getValueType() {
-        return isPrimitive() ? Boolean.TYPE : Boolean.class;
+    public void setPrimitive(boolean primitive) {
+        this.primitive = primitive;
     }
 }

@@ -18,7 +18,7 @@ package griffon.plugins.scaffolding.atoms;
 /**
  * @author Andres Almiray
  */
-public class ShortValue extends AbstractAtomicValue implements NumericAtomicValue {
+public class ShortValue extends AbstractPrimitiveAtomicValue implements NumericAtomicValue {
     public ShortValue() {
     }
 
@@ -36,7 +36,9 @@ public class ShortValue extends AbstractAtomicValue implements NumericAtomicValu
 
     @Override
     public void setValue(Object value) {
-        if (value == null || value instanceof Short) {
+        if (value == null) {
+            super.setValue(isPrimitive() ? (short) 0 : null);
+        } else if (value instanceof Short) {
             super.setValue(value);
         } else if (value instanceof Number) {
             super.setValue(((Number) value).shortValue());
@@ -46,6 +48,6 @@ public class ShortValue extends AbstractAtomicValue implements NumericAtomicValu
     }
 
     public Class getValueType() {
-        return Short.class;
+        return isPrimitive() ? Short.TYPE : Short.class;
     }
 }

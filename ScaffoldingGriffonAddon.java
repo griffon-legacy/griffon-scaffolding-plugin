@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import griffon.plugins.scaffolding.CommandObjectUtils;
 import griffon.util.ApplicationHolder;
 import griffon.util.CollectionUtils;
 import org.codehaus.griffon.runtime.core.AbstractGriffonAddon;
@@ -31,5 +32,7 @@ public class ScaffoldingGriffonAddon extends AbstractGriffonAddon {
             CollectionUtils.<String, Object>map()
                 .e("interceptor", ScaffoldingGriffonControllerActionInterceptor.class.getName())
         );
+
+        CommandObjectUtils.initializeAtomTypes();
     }
 }

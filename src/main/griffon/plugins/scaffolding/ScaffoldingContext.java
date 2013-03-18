@@ -22,6 +22,7 @@ import griffon.plugins.validation.ObjectError;
 import griffon.plugins.validation.Validateable;
 import griffon.plugins.validation.constraints.ConstrainedProperty;
 import griffon.util.ApplicationClassLoader;
+import groovy.lang.Binding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,13 +39,27 @@ import static griffon.util.GriffonNameUtils.isBlank;
 /**
  * @author Andres Almiray
  */
-public final class ScaffoldingContext {
+public class ScaffoldingContext implements Disposable {
     private final Logger LOG = LoggerFactory.getLogger(ScaffoldingContext.class);
+    private Binding binding;
     private GriffonController controller;
     private String actionName;
     private Validateable validateable;
 
     private final Map<String, Class> widgetTemplates = new LinkedHashMap<String, Class>();
+    private final List<Disposable> disposables = new ArrayList<Disposable>();
+
+    protected ScaffoldingContext() {
+
+    }
+
+    public Binding getBinding() {
+        return binding;
+    }
+
+    public void setBinding(Binding binding) {
+        this.binding = binding;
+    }
 
     public GriffonController getController() {
         return controller;
@@ -70,9 +85,19 @@ public final class ScaffoldingContext {
         this.validateable = validateable;
     }
 
-    public void cleanup() {
+    public void addDisposable(Disposable disposable) {
+        if (disposable == null || disposables.contains(disposable)) return;
+        disposables.add(disposable);
+    }
+
+    public void dispose() {
         controller = null;
         validateable = null;
+        binding = null;
+        for (Disposable disposable : disposables) {
+            disposable.dispose();
+        }
+        disposables.clear();
     }
 
     public String resolveMessage(String key, String defaultValue) {
