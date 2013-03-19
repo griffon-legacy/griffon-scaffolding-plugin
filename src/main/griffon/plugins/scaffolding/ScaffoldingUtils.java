@@ -22,6 +22,7 @@ import griffon.core.controller.GriffonControllerActionManager;
 import griffon.core.i18n.NoSuchMessageException;
 import griffon.plugins.scaffolding.atoms.*;
 import griffon.plugins.scaffolding.atoms.StringValue;
+import griffon.plugins.validation.Validateable;
 import griffon.plugins.validation.constraints.ConstrainedProperty;
 import griffon.util.*;
 import org.slf4j.Logger;
@@ -40,13 +41,15 @@ import static org.codehaus.groovy.runtime.ResourceGroovyMethods.eachLine;
 /**
  * @author Andres Almiray
  */
-public final class CommandObjectUtils {
-    private static final Logger LOG = LoggerFactory.getLogger(CommandObjectUtils.class);
+public final class ScaffoldingUtils {
+    private static final Logger LOG = LoggerFactory.getLogger(ScaffoldingUtils.class);
 
     public static final String COMMAND_OBJECT_SUFFIX = "CommandObject";
+    public static final String VALIDATABLE_SUFFIX = "Validatable";
     private static final String DEFAULT_APPLICATION_TEMPLATE_PATH = "templates.scaffolding";
     private static final String DEFAULT_TEMPLATE_PATH = "griffon.plugins.scaffolding.templates";
     private static final String KEY_DEFAULT = "default";
+    private static final String KEY_UNKNOWN = "Unknown";
     private static final String KEY_TEMPLATE = "Template";
 
     private static Map<Class, Class> SUPPORTED_ATOM_TYPES = CollectionUtils.<Class, Class>map()
@@ -121,7 +124,7 @@ public final class CommandObjectUtils {
     private static Class<?> loadClass(String className) throws ClassNotFoundException {
         ClassNotFoundException cnfe = null;
 
-        ClassLoader cl = CommandObjectUtils.class.getClassLoader();
+        ClassLoader cl = ScaffoldingUtils.class.getClassLoader();
         try {
             return cl.loadClass(className);
         } catch (ClassNotFoundException e) {
@@ -139,11 +142,11 @@ public final class CommandObjectUtils {
         return null;
     }
 
-    private CommandObjectUtils() {
+    private ScaffoldingUtils() {
 
     }
 
-    public static String[] mvcMemberCodes(GriffonController controller, String actionName, CommandObject commandObject, String suffix) {
+    public static String[] mvcMemberCodes(GriffonController controller, String actionName, Validateable validateable, String suffix) {
         // Given the following values
         //   controller    = com.acme.MailController
         //   actionName    = sendMail
@@ -156,31 +159,34 @@ public final class CommandObjectUtils {
         // com.acme
         String controllerPackageName = controller.getClass().getPackage().getName();
         // MailCommandObject
-        String commandObjectName = capitalize(getLogicalPropertyName(commandObject.getClass().getName(), COMMAND_OBJECT_SUFFIX) + COMMAND_OBJECT_SUFFIX);
+        String validateableName = capitalize(getLogicalPropertyName(validateable.getClass().getName(), COMMAND_OBJECT_SUFFIX));
+        if (validateable instanceof CommandObject) {
+            validateableName += COMMAND_OBJECT_SUFFIX;
+        }
         // com.acme.commands
-        String commandObjectPackageName = commandObject.getClass().getPackage().getName();
+        String validateablePackageName = validateable.getClass().getPackage().getName();
 
         List<String> codes = new ArrayList<String>();
-        // com.acme.mail.sendmail.MailCommandObject<suffix>
-        codes.add(dot(controllerPackageName, controllerName, normalizedActionName, commandObjectName) + suffix);
-        // com.acme.mail.MailCommandObject<suffix>
-        codes.add(dot(controllerPackageName, controllerName, commandObjectName) + suffix);
-        // com.acme.MailCommandObject<suffix>
-        codes.add(dot(controllerPackageName, commandObjectName) + suffix);
+        // com.acme.mail.sendmail.MailCommandObject<suffix> | com.acme.mail.sendmail.Mail<suffix>
+        codes.add(dot(controllerPackageName, controllerName, normalizedActionName, validateableName) + suffix);
+        // com.acme.mail.MailCommandObject<suffix> | com.acme.mail.Mail<suffix>
+        codes.add(dot(controllerPackageName, controllerName, validateableName) + suffix);
+        // com.acme.MailCommandObject<suffix> | com.acme.Mail<suffix>
+        codes.add(dot(controllerPackageName, validateableName) + suffix);
         // com.acme != com.acme.commands ?
-        if (!controllerPackageName.equals(commandObjectPackageName)) {
-            // com.acme.commands.MailCommandObject<suffix>
-            codes.add(dot(commandObjectPackageName, commandObjectName) + suffix);
+        if (!controllerPackageName.equals(validateablePackageName)) {
+            // com.acme.commands.MailCommandObject<suffix> | com.acme.commands.Mail<suffix>
+            codes.add(dot(validateablePackageName, validateableName) + suffix);
         }
-        // templates.scaffolding.CommandObject<suffix>
-        codes.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, COMMAND_OBJECT_SUFFIX) + suffix);
+        // templates.scaffolding.CommandObject<suffix> | templates.scaffolding.Validateable<suffix>
+        codes.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, validateable instanceof CommandObject ? COMMAND_OBJECT_SUFFIX : VALIDATABLE_SUFFIX) + suffix);
         // griffon.plugins.scaffolding.templates.CommandObject<suffix>
         codes.add(dot(DEFAULT_TEMPLATE_PATH, COMMAND_OBJECT_SUFFIX) + suffix);
 
         return codes.toArray(new String[codes.size()]);
     }
 
-    public static String[] messageCodes(GriffonController controller, String actionName, CommandObject commandObject, String property) {
+    public static String[] messageCodes(GriffonController controller, String actionName, Validateable validateable, String property) {
         // Given the following values
         //   controller    = com.acme.MailController
         //   actionName    = sendMail
@@ -190,21 +196,24 @@ public final class CommandObjectUtils {
         // com.acme
         String controllerPackageName = controller.getClass().getPackage().getName();
         // MailCommandObject
-        String commandObjectName = capitalize(getLogicalPropertyName(commandObject.getClass().getName(), COMMAND_OBJECT_SUFFIX) + COMMAND_OBJECT_SUFFIX);
+        String validateableName = capitalize(getLogicalPropertyName(validateable.getClass().getName(), COMMAND_OBJECT_SUFFIX));
+        if (validateable instanceof CommandObject) {
+            validateableName += COMMAND_OBJECT_SUFFIX;
+        }
         // com.acme.commands
-        String commandObjectPackageName = commandObject.getClass().getPackage().getName();
+        String validateablePackageName = validateable.getClass().getPackage().getName();
 
         List<String> codes = new ArrayList<String>();
-        // com.acme.MailController.sendMail.MailCommandObject.<property>
-        codes.add(dot(controllerName, actionName, commandObjectName, property));
-        // com.acme.MailController.MailCommandObject.<property>
-        codes.add(dot(controllerName, commandObjectName, property));
-        // com.acme.MailCommandObject.<property>
-        codes.add(dot(controllerPackageName, commandObjectName, property));
+        // com.acme.MailController.sendMail.MailCommandObject.<property> | com.acme.MailController.sendMail.Mail.<property>
+        codes.add(dot(controllerName, actionName, validateableName, property));
+        // com.acme.MailController.MailCommandObject.<property> | com.acme.MailController.Mail.<property>
+        codes.add(dot(controllerName, validateableName, property));
+        // com.acme.MailCommandObject.<property> | com.acme.Mail.<property>
+        codes.add(dot(controllerPackageName, validateableName, property));
         // com.acme != com.acme.commands ?
-        if (!controllerPackageName.equals(commandObjectPackageName)) {
-            // com.acme.commands.MailCommandObject.<property>
-            codes.add(dot(commandObjectPackageName, commandObjectName, property));
+        if (!controllerPackageName.equals(validateablePackageName)) {
+            // com.acme.commands.MailCommandObject.<property> | com.acme.commands.Mail.<property>
+            codes.add(dot(validateablePackageName, validateableName, property));
         }
         // default.<property>
         codes.add(dot(KEY_DEFAULT, property));
@@ -212,8 +221,8 @@ public final class CommandObjectUtils {
         return codes.toArray(new String[codes.size()]);
     }
 
-    public static String[] propertyTemplates(GriffonController controller, String actionName, CommandObject commandObject, String property) {
-        ConstrainedProperty constrainedProperty = commandObject.constrainedProperties().get(property);
+    public static String[] propertyTemplates(GriffonController controller, String actionName, Validateable validateable, String property) {
+        ConstrainedProperty constrainedProperty = validateable.constrainedProperties().get(property);
 
         // Given the following values
         //   controller    = com.acme.MailController
@@ -227,9 +236,9 @@ public final class CommandObjectUtils {
         // com.acme
         String controllerPackageName = controller.getClass().getPackage().getName();
         // mail
-        String commandObjectName = getLogicalPropertyName(commandObject.getClass().getName(), COMMAND_OBJECT_SUFFIX);
+        String validateableName = getLogicalPropertyName(validateable.getClass().getName(), COMMAND_OBJECT_SUFFIX);
         // com.acme.commands
-        String commandObjectPackageName = commandObject.getClass().getPackage().getName();
+        String validateablePackageName = validateable.getClass().getPackage().getName();
 
         property = capitalize(property);
         String simpleType = constrainedProperty.getPropertyType().getSimpleName();
@@ -238,28 +247,32 @@ public final class CommandObjectUtils {
 
         List<String> templates = new ArrayList<String>();
         // com.acme.mail.sendmail.mail.<property>Template
-        templates.add(dot(controllerPackageName, controllerName, normalizedActionName, commandObjectName, property) + KEY_TEMPLATE);
+        templates.add(dot(controllerPackageName, controllerName, normalizedActionName, validateableName, property) + KEY_TEMPLATE);
         // com.acme.mail.sendmail.mail.<propertyType>Template
-        templates.add(dot(controllerPackageName, controllerName, normalizedActionName, commandObjectName, propertyType) + KEY_TEMPLATE);
+        templates.add(dot(controllerPackageName, controllerName, normalizedActionName, validateableName, propertyType) + KEY_TEMPLATE);
         // com.acme.mail.mail.<property>Template
-        templates.add(dot(controllerPackageName, controllerName, commandObjectName, property) + KEY_TEMPLATE);
+        templates.add(dot(controllerPackageName, controllerName, validateableName, property) + KEY_TEMPLATE);
         // com.acme.mail.mail.<propertyType>Template
-        templates.add(dot(controllerPackageName, controllerName, commandObjectName, propertyType) + KEY_TEMPLATE);
+        templates.add(dot(controllerPackageName, controllerName, validateableName, propertyType) + KEY_TEMPLATE);
         // com.acme.commands.mail.<property>Template
-        templates.add(dot(commandObjectPackageName, commandObjectName, property) + KEY_TEMPLATE);
+        templates.add(dot(validateablePackageName, validateableName, property) + KEY_TEMPLATE);
         // com.acme.commands.mail.<propertyType>Template
-        templates.add(dot(commandObjectPackageName, commandObjectName, propertyType) + KEY_TEMPLATE);
+        templates.add(dot(validateablePackageName, validateableName, propertyType) + KEY_TEMPLATE);
         // templates.scaffolding.<property>Template
         templates.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, property + KEY_TEMPLATE));
         // templates.scaffolding.<propertyType>Template
         templates.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, propertyType + KEY_TEMPLATE));
+        // templates.scaffolding.UnknownTemplate
+        templates.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, KEY_UNKNOWN + KEY_TEMPLATE));
         // griffon.plugins.scaffolding.templates.<propertyType>Template
         templates.add(dot(DEFAULT_TEMPLATE_PATH, propertyType + KEY_TEMPLATE));
+        // griffon.plugins.scaffolding.templates.UnknownTemplate
+        templates.add(dot(DEFAULT_TEMPLATE_PATH, KEY_UNKNOWN + KEY_TEMPLATE));
 
         return templates.toArray(new String[templates.size()]);
     }
 
-    public static String[] widgetTemplates(GriffonController controller, String actionName, CommandObject commandObject, String widget) {
+    public static String[] widgetTemplates(GriffonController controller, String actionName, Validateable validateable, String widget) {
         // Given the following values
         //   controller    = com.acme.MailController
         //   actionName    = sendMail
@@ -272,23 +285,27 @@ public final class CommandObjectUtils {
         // com.acme
         String controllerPackageName = controller.getClass().getPackage().getName();
         // mail
-        String commandObjectName = getLogicalPropertyName(commandObject.getClass().getName(), COMMAND_OBJECT_SUFFIX);
+        String validateableName = getLogicalPropertyName(validateable.getClass().getName(), COMMAND_OBJECT_SUFFIX);
         // com.acme.commands
-        String commandObjectPackageName = commandObject.getClass().getPackage().getName();
+        String validateablePackageName = validateable.getClass().getPackage().getName();
 
         widget = capitalize(widget);
 
         List<String> templates = new ArrayList<String>();
         // com.acme.mail.sendmail.mail.<widget>Template
-        templates.add(dot(controllerPackageName, controllerName, normalizedActionName, commandObjectName, widget) + KEY_TEMPLATE);
+        templates.add(dot(controllerPackageName, controllerName, normalizedActionName, validateableName, widget) + KEY_TEMPLATE);
         // com.acme.mail.mail.<widget>Template
-        templates.add(dot(controllerPackageName, controllerName, commandObjectName, widget) + KEY_TEMPLATE);
+        templates.add(dot(controllerPackageName, controllerName, validateableName, widget) + KEY_TEMPLATE);
         // com.acme.commands.mail.<widget>Template
-        templates.add(dot(commandObjectPackageName, commandObjectName, widget) + KEY_TEMPLATE);
+        templates.add(dot(validateablePackageName, validateableName, widget) + KEY_TEMPLATE);
         // templates.scaffolding.<widget>Template
         templates.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, widget + KEY_TEMPLATE));
+        // templates.scaffolding.UnknownTemplate
+        templates.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, KEY_UNKNOWN + KEY_TEMPLATE));
         // griffon.plugins.scaffolding.<widget>Template
         templates.add(dot(DEFAULT_TEMPLATE_PATH, widget + KEY_TEMPLATE));
+        // griffon.plugins.scaffolding.UnknownTemplate
+        templates.add(dot(DEFAULT_TEMPLATE_PATH, KEY_UNKNOWN + KEY_TEMPLATE));
 
         return templates.toArray(new String[templates.size()]);
     }
@@ -298,8 +315,8 @@ public final class CommandObjectUtils {
             getLogicalPropertyName(commandObject.getClass().getName(), COMMAND_OBJECT_SUFFIX));
     }
 
-    public static String resolveMessage(GriffonController controller, String actionName, CommandObject commandObject, String property, String defaultValue) {
-        for (String code : messageCodes(controller, actionName, commandObject, property)) {
+    public static String resolveMessage(GriffonController controller, String actionName, Validateable validateable, String property, String defaultValue) {
+        for (String code : messageCodes(controller, actionName, validateable, property)) {
             try {
                 return controller.getApp().getMessage(code);
             } catch (NoSuchMessageException e) {
@@ -314,8 +331,8 @@ public final class CommandObjectUtils {
         return controller.getClass().getName() + "." + actionName;
     }
 
-    public static String qualifyCommandObject(GriffonController controller, String actionName, CommandObject commandObject) {
-        return qualifyActionName(controller, actionName) + "." + getPropertyName(commandObject.getClass());
+    public static String qualifyActionValidatable(GriffonController controller, String actionName, Validateable validateable) {
+        return qualifyActionName(controller, actionName) + "." + getPropertyName(validateable.getClass());
     }
 
     public static String normalizeActionName(GriffonController controller, String actionName) {

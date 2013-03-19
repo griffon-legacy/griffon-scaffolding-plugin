@@ -35,6 +35,11 @@ public class ShortValue extends AbstractPrimitiveAtomicValue implements NumericA
     }
 
     @Override
+    public String toString() {
+        return null == value ? (isPrimitive() ? "0" : null) : String.valueOf(value);
+    }
+
+    @Override
     public void setValue(Object value) {
         if (value == null) {
             super.setValue(isPrimitive() ? (short) 0 : null);

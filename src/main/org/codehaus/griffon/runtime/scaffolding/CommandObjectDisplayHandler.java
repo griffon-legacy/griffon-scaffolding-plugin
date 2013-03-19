@@ -31,8 +31,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static griffon.plugins.scaffolding.CommandObjectUtils.mvcMemberCodes;
-import static griffon.plugins.scaffolding.CommandObjectUtils.qualifyCommandObject;
+import static griffon.plugins.scaffolding.ScaffoldingUtils.mvcMemberCodes;
+import static griffon.plugins.scaffolding.ScaffoldingUtils.qualifyActionValidatable;
 import static griffon.util.GriffonNameUtils.capitalize;
 import static org.codehaus.griffon.runtime.util.GriffonApplicationHelper.safeLoadClass;
 import static org.codehaus.griffon.runtime.util.GriffonApplicationHelper.safeNewInstance;
@@ -76,7 +76,7 @@ public class CommandObjectDisplayHandler implements ApplicationHandler {
     }
 
     private ScaffoldingContext fetchScaffoldingContext(GriffonController controller, String actionName, CommandObject commandObject) {
-        String fqCommandName = qualifyCommandObject(controller, actionName, commandObject);
+        String fqCommandName = qualifyActionValidatable(controller, actionName, commandObject);
 
         ScaffoldingContext scaffoldingContext = contexts.get(fqCommandName);
         if (scaffoldingContext == null) {
@@ -98,7 +98,7 @@ public class CommandObjectDisplayHandler implements ApplicationHandler {
     }
 
     private MVCGroupConfiguration fetchMVCGroupConfiguration(GriffonController controller, String actionName, CommandObject commandObject) {
-        String fqCommandName = qualifyCommandObject(controller, actionName, commandObject);
+        String fqCommandName = qualifyActionValidatable(controller, actionName, commandObject);
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Searching MVCGroupConfiguration for " + fqCommandName);
@@ -121,7 +121,7 @@ public class CommandObjectDisplayHandler implements ApplicationHandler {
         String vtemplate = resolveMember(controller, actionName, commandObject, GriffonViewClass.TRAILING);
         String ctemplate = resolveMember(controller, actionName, commandObject, GriffonControllerClass.TRAILING);
 
-        String fqCommandName = qualifyCommandObject(controller, actionName, commandObject);
+        String fqCommandName = qualifyActionValidatable(controller, actionName, commandObject);
         MVCGroupConfiguration mvcGroupConfiguration = app.getMvcGroupManager().newMVCGroupConfiguration(fqCommandName,
             CollectionUtils.<String, String>map()
                 .e(GriffonModelClass.TYPE, mtemplate)
@@ -134,7 +134,7 @@ public class CommandObjectDisplayHandler implements ApplicationHandler {
 
     private String resolveMember(GriffonController controller, String actionName, CommandObject commandObject, String suffix) {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("  Resolving " + suffix + " member for " + qualifyCommandObject(controller, actionName, commandObject));
+            LOG.debug("  Resolving " + suffix + " member for " + qualifyActionValidatable(controller, actionName, commandObject));
         }
 
         for (String code : mvcMemberCodes(controller, actionName, commandObject, suffix)) {
@@ -146,9 +146,9 @@ public class CommandObjectDisplayHandler implements ApplicationHandler {
         }
 
         if (LOG.isWarnEnabled()) {
-            LOG.warn("  Could not resolve " + suffix + " member for " + qualifyCommandObject(controller, actionName, commandObject));
+            LOG.warn("  Could not resolve " + suffix + " member for " + qualifyActionValidatable(controller, actionName, commandObject));
         }
 
-        throw new IllegalArgumentException("Could not resolve " + suffix + " member for " + qualifyCommandObject(controller, actionName, commandObject));
+        throw new IllegalArgumentException("Could not resolve " + suffix + " member for " + qualifyActionValidatable(controller, actionName, commandObject));
     }
 }

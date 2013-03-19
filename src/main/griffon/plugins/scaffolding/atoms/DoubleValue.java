@@ -35,6 +35,11 @@ public class DoubleValue extends AbstractPrimitiveAtomicValue implements Numeric
     }
 
     @Override
+    public String toString() {
+        return null == value ? (isPrimitive() ? "0.0" : null) : String.valueOf(value);
+    }
+
+    @Override
     public void setValue(Object value) {
         if (value == null) {
             super.setValue(isPrimitive() ? 0d : null);

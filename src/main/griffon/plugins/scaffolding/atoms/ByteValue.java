@@ -35,6 +35,11 @@ public class ByteValue extends AbstractPrimitiveAtomicValue implements NumericAt
     }
 
     @Override
+    public String toString() {
+        return null == value ? (isPrimitive() ? "0" : null) : String.valueOf(value);
+    }
+
+    @Override
     public void setValue(Object value) {
         if (value == null) {
             super.setValue(isPrimitive() ? (byte) 0 : null);

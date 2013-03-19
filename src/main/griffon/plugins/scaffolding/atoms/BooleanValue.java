@@ -31,6 +31,11 @@ public class BooleanValue extends AbstractPrimitiveAtomicValue {
     }
 
     @Override
+    public String toString() {
+        return null == value ? (isPrimitive() ? "false" : null) : String.valueOf(value);
+    }
+
+    @Override
     public void setValue(Object value) {
         if (value == null) {
             super.setValue(isPrimitive() ? false : null);

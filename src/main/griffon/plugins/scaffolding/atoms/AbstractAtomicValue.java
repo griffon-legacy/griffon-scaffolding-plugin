@@ -54,7 +54,7 @@ public abstract class AbstractAtomicValue extends AbstractObservable implements 
 
     @Override
     public String toString() {
-        return null == value ? "<null>" : String.valueOf(value);
+        return null == value ? null : String.valueOf(value);
     }
 
     public int compareTo(AtomicValue other) {

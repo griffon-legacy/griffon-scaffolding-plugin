@@ -32,8 +32,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static griffon.plugins.scaffolding.CommandObjectUtils.dot;
-import static griffon.plugins.scaffolding.CommandObjectUtils.qualifyCommandObject;
+import static griffon.plugins.scaffolding.ScaffoldingUtils.dot;
+import static griffon.plugins.scaffolding.ScaffoldingUtils.qualifyActionValidatable;
 import static griffon.util.GriffonNameUtils.isBlank;
 
 /**
@@ -101,7 +101,7 @@ public class ScaffoldingContext implements Disposable {
     }
 
     public String resolveMessage(String key, String defaultValue) {
-        return CommandObjectUtils.resolveMessage(controller, actionName, (CommandObject) validateable, key, defaultValue);
+        return ScaffoldingUtils.resolveMessage(controller, actionName, validateable, key, defaultValue);
     }
 
     public Class resolveWidget(String property) {
@@ -113,29 +113,75 @@ public class ScaffoldingContext implements Disposable {
             }
             ConstrainedProperty constrainedProperty = validateable.constrainedProperties().get(property);
             if (!isBlank(constrainedProperty.getWidget())) {
-                for (String widgetName : CommandObjectUtils.widgetTemplates(controller, actionName, (CommandObject) validateable, constrainedProperty.getWidget())) {
+                // attempt i18n resolution first
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("  [I18N]");
+                }
+                for (String resourceKey : ScaffoldingUtils.widgetTemplates(controller, actionName, validateable, constrainedProperty.getWidget())) {
                     try {
                         if (LOG.isDebugEnabled()) {
-                            LOG.debug("  Resolving " + widgetName);
+                            LOG.debug("  Resolving " + resourceKey);
                         }
-                        widgetTemplate = ApplicationClassLoader.get().loadClass(widgetName);
+                        String widgetTemplateClassName = getController().getApp().getMessage(resourceKey);
+                        widgetTemplate = ApplicationClassLoader.get().loadClass(widgetTemplateClassName);
                         break;
                     } catch (Exception e) {
                         // continue
                     }
                 }
+
+                // attempt direct class load
+                if (widgetTemplate == null) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("  [CLASS]");
+                    }
+                    for (String widgetName : ScaffoldingUtils.widgetTemplates(controller, actionName, validateable, constrainedProperty.getWidget())) {
+                        try {
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("  Resolving " + widgetName);
+                            }
+                            widgetTemplate = ApplicationClassLoader.get().loadClass(widgetName);
+                            break;
+                        } catch (Exception e) {
+                            // continue
+                        }
+                    }
+                }
             }
 
             if (widgetTemplate == null) {
-                for (String widgetName : CommandObjectUtils.propertyTemplates(controller, actionName, (CommandObject) validateable, property)) {
+                // attempt i18n resolution first
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("  [I18N]");
+                }
+                for (String resourceKey : ScaffoldingUtils.propertyTemplates(controller, actionName, validateable, property)) {
                     try {
                         if (LOG.isDebugEnabled()) {
-                            LOG.debug("  Resolving " + widgetName);
+                            LOG.debug("  Resolving " + resourceKey);
                         }
-                        widgetTemplate = ApplicationClassLoader.get().loadClass(widgetName);
+                        String widgetTemplateClassName = getController().getApp().getMessage(resourceKey);
+                        widgetTemplate = ApplicationClassLoader.get().loadClass(widgetTemplateClassName);
                         break;
                     } catch (Exception e) {
                         // continue
+                    }
+                }
+
+                // attempt direct class load
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("  [CLASS]");
+                }
+                if (widgetTemplate == null) {
+                    for (String widgetName : ScaffoldingUtils.propertyTemplates(controller, actionName, validateable, property)) {
+                        try {
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("  Resolving " + widgetName);
+                            }
+                            widgetTemplate = ApplicationClassLoader.get().loadClass(widgetName);
+                            break;
+                        } catch (Exception e) {
+                            // continue
+                        }
                     }
                 }
             }
@@ -178,10 +224,10 @@ public class ScaffoldingContext implements Disposable {
     }
 
     private String qualify() {
-        return qualifyCommandObject(controller, actionName, (CommandObject) validateable);
+        return qualifyActionValidatable(controller, actionName, validateable);
     }
 
     private String qualify(String extra) {
-        return dot(qualifyCommandObject(controller, actionName, (CommandObject) validateable), extra);
+        return dot(qualifyActionValidatable(controller, actionName, validateable), extra);
     }
 }

@@ -15,6 +15,7 @@
  */
 package griffon.plugins.scaffolding.atoms;
 
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -40,6 +41,8 @@ public class DateValue extends AbstractAtomicValue implements NumericAtomicValue
     public void setValue(Object value) {
         if (value == null || value instanceof Date) {
             super.setValue(value);
+        } else if (value instanceof Calendar) {
+            super.setValue(((Calendar) value).getTime());
         } else if (value instanceof Number) {
             Date d = new Date();
             d.setTime(((Number) value).longValue());
