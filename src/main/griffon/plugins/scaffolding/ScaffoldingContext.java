@@ -104,6 +104,7 @@ public class ScaffoldingContext implements Disposable {
     @SuppressWarnings("unchecked")
     public Map<String, Object> widgetAttributes(String widget, ConstrainedProperty constrainedProperty) {
         ConfigObject config = new ConfigObject();
+        config.putAll((ConfigObject) getConfigValue(getUiDefaults(), "widget", new ConfigObject()));
         config.putAll((ConfigObject) getConfigValue(getUiDefaults(), widget, new ConfigObject()));
         config.putAll(constrainedProperty.getAttributes());
         Map<String, Object> attributes = new LinkedHashMap<String, Object>();
