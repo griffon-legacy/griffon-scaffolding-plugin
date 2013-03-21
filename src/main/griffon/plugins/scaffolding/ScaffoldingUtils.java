@@ -25,6 +25,7 @@ import griffon.plugins.scaffolding.atoms.StringValue;
 import griffon.plugins.validation.Validateable;
 import griffon.plugins.validation.constraints.ConstrainedProperty;
 import griffon.util.*;
+import groovy.util.ConfigObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,9 @@ import java.math.BigInteger;
 import java.net.URL;
 import java.util.*;
 
+import static griffon.util.ApplicationHolder.getApplication;
+import static griffon.util.ConfigUtils.getConfigValue;
+import static griffon.util.ConfigUtils.loadConfig;
 import static griffon.util.GriffonExceptionHandler.sanitize;
 import static griffon.util.GriffonNameUtils.*;
 import static org.codehaus.groovy.runtime.ResourceGroovyMethods.eachLine;
@@ -43,6 +47,10 @@ import static org.codehaus.groovy.runtime.ResourceGroovyMethods.eachLine;
  */
 public final class ScaffoldingUtils {
     private static final Logger LOG = LoggerFactory.getLogger(ScaffoldingUtils.class);
+    private static final String KEY_SCAFFOLDING_UIDEFAULTS = "scaffolding.uidefaults";
+    private static final String GLOBAL_UIDEFAULTS_CONFIG_FILE = "UiDefaults";
+    private static ConfigObject uiDefaults;
+    private static final Object LOCK = new Object[0];
 
     public static final String COMMAND_OBJECT_SUFFIX = "CommandObject";
     public static final String VALIDATABLE_SUFFIX = "Validatable";
@@ -262,12 +270,8 @@ public final class ScaffoldingUtils {
         templates.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, property + KEY_TEMPLATE));
         // templates.scaffolding.<propertyType>Template
         templates.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, propertyType + KEY_TEMPLATE));
-        // templates.scaffolding.UnknownTemplate
-        templates.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, KEY_UNKNOWN + KEY_TEMPLATE));
         // griffon.plugins.scaffolding.templates.<propertyType>Template
         templates.add(dot(DEFAULT_TEMPLATE_PATH, propertyType + KEY_TEMPLATE));
-        // griffon.plugins.scaffolding.templates.UnknownTemplate
-        templates.add(dot(DEFAULT_TEMPLATE_PATH, KEY_UNKNOWN + KEY_TEMPLATE));
 
         return templates.toArray(new String[templates.size()]);
     }
@@ -300,10 +304,17 @@ public final class ScaffoldingUtils {
         templates.add(dot(validateablePackageName, validateableName, widget) + KEY_TEMPLATE);
         // templates.scaffolding.<widget>Template
         templates.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, widget + KEY_TEMPLATE));
-        // templates.scaffolding.UnknownTemplate
-        templates.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, KEY_UNKNOWN + KEY_TEMPLATE));
         // griffon.plugins.scaffolding.<widget>Template
         templates.add(dot(DEFAULT_TEMPLATE_PATH, widget + KEY_TEMPLATE));
+
+        return templates.toArray(new String[templates.size()]);
+    }
+
+    public static String[] unknownWidgetTemplates() {
+        List<String> templates = new ArrayList<String>();
+
+        // templates.scaffolding.UnknownTemplate
+        templates.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, KEY_UNKNOWN + KEY_TEMPLATE));
         // griffon.plugins.scaffolding.UnknownTemplate
         templates.add(dot(DEFAULT_TEMPLATE_PATH, KEY_UNKNOWN + KEY_TEMPLATE));
 
@@ -358,5 +369,25 @@ public final class ScaffoldingUtils {
         }
 
         return b.toString();
+    }
+
+    private static ConfigObject loadUiDefaults() {
+        synchronized (LOCK) {
+            ConfigObject config = new ConfigObject();
+            ConfigObject defaults = (ConfigObject) getConfigValue(getApplication().getConfig(), KEY_SCAFFOLDING_UIDEFAULTS, new ConfigObject());
+            config.merge(defaults);
+            ConfigObject globalDefaults = loadConfig(GLOBAL_UIDEFAULTS_CONFIG_FILE);
+            config.merge(globalDefaults);
+            return config;
+        }
+    }
+
+    public static ConfigObject getUiDefaults() {
+        synchronized (LOCK) {
+            if (uiDefaults == null) {
+                uiDefaults = loadUiDefaults();
+            }
+            return uiDefaults;
+        }
     }
 }

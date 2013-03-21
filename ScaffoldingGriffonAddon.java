@@ -24,6 +24,7 @@ import org.codehaus.griffon.runtime.scaffolding.ScaffoldingGriffonControllerActi
  * @author Andres Almiray
  */
 public class ScaffoldingGriffonAddon extends AbstractGriffonAddon {
+
     public ScaffoldingGriffonAddon() {
         super(ApplicationHolder.getApplication());
 

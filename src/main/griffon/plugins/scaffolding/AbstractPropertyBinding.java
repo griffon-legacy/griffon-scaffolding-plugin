@@ -86,8 +86,8 @@ public abstract class AbstractPropertyBinding implements Disposable {
                 sourceEditor.setValue(targetValue);
                 setSourcePropertyValue(sourceEditor.getValue());
             } catch (ValueConversionException e) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Could not update target property '" + constrainedProperty.getPropertyName() + "'", sanitize(e));
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("Could not update target property '" + constrainedProperty.getPropertyName() + "'", sanitize(e));
                 }
             } finally {
                 firing = false;
@@ -104,8 +104,8 @@ public abstract class AbstractPropertyBinding implements Disposable {
                 targetEditor.setValue(getSourcePropertyValue());
                 setTargetPropertyValue(targetEditor.getValue());
             } catch (ValueConversionException e) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Could not update source property", sanitize(e));
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("Could not update source property", sanitize(e));
                 }
                 setTargetPropertyValue(null);
             } finally {
