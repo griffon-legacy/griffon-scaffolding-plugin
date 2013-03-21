@@ -59,6 +59,7 @@ public final class ScaffoldingUtils {
     private static final String KEY_DEFAULT = "default";
     private static final String KEY_UNKNOWN = "Unknown";
     private static final String KEY_TEMPLATE = "Template";
+    private static final String KEY_ENUM = "Enum";
 
     private static Map<Class, Class> SUPPORTED_ATOM_TYPES = CollectionUtils.<Class, Class>map()
         .e(BigDecimal.class, BigDecimalValue.class)
@@ -250,6 +251,7 @@ public final class ScaffoldingUtils {
 
         property = capitalize(property);
         String simpleType = constrainedProperty.getPropertyType().getSimpleName();
+        boolean isEnumType = constrainedProperty.getPropertyType().isEnum();
         if ("int".equals(simpleType)) simpleType = "integer";
         String propertyType = capitalize(getLogicalPropertyName(simpleType, "Value"));
 
@@ -258,20 +260,40 @@ public final class ScaffoldingUtils {
         templates.add(dot(controllerPackageName, controllerName, normalizedActionName, validateableName, property) + KEY_TEMPLATE);
         // com.acme.mail.sendmail.mail.<propertyType>Template
         templates.add(dot(controllerPackageName, controllerName, normalizedActionName, validateableName, propertyType) + KEY_TEMPLATE);
+        if (isEnumType) {
+            // com.acme.mail.sendmail.mail.EnumTemplate
+            templates.add(dot(controllerPackageName, controllerName, normalizedActionName, validateableName, KEY_ENUM) + KEY_TEMPLATE);
+        }
         // com.acme.mail.mail.<property>Template
         templates.add(dot(controllerPackageName, controllerName, validateableName, property) + KEY_TEMPLATE);
         // com.acme.mail.mail.<propertyType>Template
         templates.add(dot(controllerPackageName, controllerName, validateableName, propertyType) + KEY_TEMPLATE);
+        if (isEnumType) {
+            // com.acme.mail.mail.EnumTemplate
+            templates.add(dot(controllerPackageName, controllerName, validateableName, KEY_ENUM) + KEY_TEMPLATE);
+        }
         // com.acme.commands.mail.<property>Template
         templates.add(dot(validateablePackageName, validateableName, property) + KEY_TEMPLATE);
         // com.acme.commands.mail.<propertyType>Template
         templates.add(dot(validateablePackageName, validateableName, propertyType) + KEY_TEMPLATE);
+        if (isEnumType) {
+            // com.acme.commands.mail.EnumTemplate
+            templates.add(dot(validateablePackageName, validateableName, KEY_ENUM) + KEY_TEMPLATE);
+        }
         // templates.scaffolding.<property>Template
         templates.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, property + KEY_TEMPLATE));
         // templates.scaffolding.<propertyType>Template
         templates.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, propertyType + KEY_TEMPLATE));
+        if (isEnumType) {
+            // templates.scaffolding.EnumTemplate
+            templates.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, KEY_ENUM + KEY_TEMPLATE));
+        }
         // griffon.plugins.scaffolding.templates.<propertyType>Template
         templates.add(dot(DEFAULT_TEMPLATE_PATH, propertyType + KEY_TEMPLATE));
+        if (isEnumType) {
+            // griffon.plugins.scaffolding.templates.EnumTemplate
+            templates.add(dot(DEFAULT_TEMPLATE_PATH, KEY_ENUM + KEY_TEMPLATE));
+        }
 
         return templates.toArray(new String[templates.size()]);
     }

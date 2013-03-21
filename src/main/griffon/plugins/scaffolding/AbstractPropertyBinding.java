@@ -17,6 +17,7 @@
 package griffon.plugins.scaffolding;
 
 import griffon.core.resources.editors.ExtendedPropertyEditor;
+import griffon.core.resources.editors.PropertyEditorResolver;
 import griffon.core.resources.editors.ValueConversionException;
 import griffon.exceptions.GriffonException;
 import griffon.plugins.validation.constraints.ConstrainedProperty;
@@ -133,7 +134,7 @@ public abstract class AbstractPropertyBinding implements Disposable {
     }
 
     protected PropertyEditor doResolveTargetPropertyEditor() {
-        return PropertyEditorManager.findEditor(constrainedProperty.getPropertyType());
+        return PropertyEditorResolver.findEditor(constrainedProperty.getPropertyType());
     }
 
     protected void configureTargetPropertyEditor(PropertyEditor editor) {
