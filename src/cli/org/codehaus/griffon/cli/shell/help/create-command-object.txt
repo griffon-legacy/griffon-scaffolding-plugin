@@ -1,0 +1,24 @@
+DESCRIPTION
+        create-command-object
+
+    Creates a new command object class.
+
+SYNTAX
+        create-command-object [options] [name]
+
+ARGUMENTS
+        name
+                The name of the command object to be created.
+
+OPTIONS
+        --archetype
+                Archetype to be searched for templates.
+                (defaults to default)
+        --file-type
+                Source file type.
+                (defaults to groovy)
+        --non-interactive
+                Controls if the shell can ask for input or not.
+        --skip-package-prompt
+                Skips the usage of the application's default package if the name
+                of the class is not fully qualified.
