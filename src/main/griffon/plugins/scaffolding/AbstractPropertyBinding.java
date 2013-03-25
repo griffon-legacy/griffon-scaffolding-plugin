@@ -24,7 +24,8 @@ import griffon.plugins.validation.constraints.ConstrainedProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.beans.*;
+import java.beans.PropertyDescriptor;
+import java.beans.PropertyEditor;
 import java.lang.reflect.InvocationTargetException;
 
 import static griffon.util.GriffonClassUtils.getPropertyDescriptor;
@@ -39,19 +40,6 @@ public abstract class AbstractPropertyBinding implements Disposable {
     protected ConstrainedProperty constrainedProperty;
     private final Object LOCK = new Object[0];
     private boolean firing = false;
-
-    protected final PropertyChangeListener sourceChangeListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent propertyChangeEvent) {
-            updateTarget();
-        }
-    };
-
-    protected final PropertyChangeListener targetChangeListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent propertyChangeEvent) {
-            updateSource();
-        }
-    };
-
 
     protected AbstractPropertyBinding(ConstrainedProperty constrainedProperty) {
         this.constrainedProperty = constrainedProperty;
