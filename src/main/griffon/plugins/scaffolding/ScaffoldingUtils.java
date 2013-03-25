@@ -396,10 +396,10 @@ public final class ScaffoldingUtils {
     private static ConfigObject loadUiDefaults() {
         synchronized (LOCK) {
             ConfigObject config = new ConfigObject();
-            ConfigObject defaults = (ConfigObject) getConfigValue(getApplication().getConfig(), KEY_SCAFFOLDING_UIDEFAULTS, new ConfigObject());
-            config.merge(defaults);
             ConfigObject globalDefaults = loadConfig(GLOBAL_UIDEFAULTS_CONFIG_FILE);
             config.merge(globalDefaults);
+            ConfigObject localDefaults = (ConfigObject) getConfigValue(getApplication().getConfig(), KEY_SCAFFOLDING_UIDEFAULTS, new ConfigObject());
+            config.merge(localDefaults);
             return config;
         }
     }

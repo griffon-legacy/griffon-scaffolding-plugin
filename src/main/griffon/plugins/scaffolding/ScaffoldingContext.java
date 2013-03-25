@@ -110,7 +110,6 @@ public class ScaffoldingContext implements Disposable {
         Map<String, Object> attributes = new LinkedHashMap<String, Object>();
         attributes.putAll(config);
         attributes.put("id", constrainedProperty.getPropertyName());
-        attributes.put("enabled", constrainedProperty.isEnabled());
         return attributes;
     }
 
