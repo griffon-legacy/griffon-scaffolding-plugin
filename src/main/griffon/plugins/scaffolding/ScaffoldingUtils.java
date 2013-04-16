@@ -59,6 +59,7 @@ public final class ScaffoldingUtils {
     private static final String KEY_DEFAULT = "default";
     private static final String KEY_UNKNOWN = "Unknown";
     private static final String KEY_TEMPLATE = "Template";
+    private static final String KEY_LABELER_TEMPLATE = "LabelerTemplate";
     private static final String KEY_ENUM = "Enum";
 
     private static Map<Class, Class> SUPPORTED_ATOM_TYPES = CollectionUtils.<Class, Class>map()
@@ -187,7 +188,7 @@ public final class ScaffoldingUtils {
             // com.acme.commands.MailCommandObject<suffix> | com.acme.commands.Mail<suffix>
             codes.add(dot(validateablePackageName, validateableName) + suffix);
         }
-        // templates.scaffolding.CommandObject<suffix> | templates.scaffolding.Validateable<suffix>
+        // templates.scaffolding.CommandObject<suffix> | templates.scaffolding.Validateable<suffix>
         codes.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, validateable instanceof CommandObject ? COMMAND_OBJECT_SUFFIX : VALIDATABLE_SUFFIX) + suffix);
         // griffon.plugins.scaffolding.templates.CommandObject<suffix>
         codes.add(dot(DEFAULT_TEMPLATE_PATH, COMMAND_OBJECT_SUFFIX) + suffix);
@@ -294,6 +295,39 @@ public final class ScaffoldingUtils {
             // griffon.plugins.scaffolding.templates.EnumTemplate
             templates.add(dot(DEFAULT_TEMPLATE_PATH, KEY_ENUM + KEY_TEMPLATE));
         }
+
+        return templates.toArray(new String[templates.size()]);
+    }
+
+    public static String[] propertyLabelerTemplates(GriffonController controller, String actionName, Validateable validateable, String property) {
+        String[] propertyTemplates = propertyTemplates(controller, actionName, validateable, property);
+        String[] propertyLabelerTemplates = new String[propertyTemplates.length];
+
+        for (int i = 0; i < propertyTemplates.length; i++) {
+            propertyLabelerTemplates[i] = propertyTemplates[i].substring(0, propertyTemplates[i].length() - KEY_TEMPLATE.length()) + KEY_LABELER_TEMPLATE;
+        }
+
+        return propertyLabelerTemplates;
+    }
+
+    public static String[] widgetLabelerTemplates(GriffonController controller, String actionName, Validateable validateable, String widget) {
+        String[] templates = widgetTemplates(controller, actionName, validateable, widget);
+        String[] labelerTemplates = new String[templates.length];
+
+        for (int i = 0; i < templates.length; i++) {
+            labelerTemplates[i] = templates[i].substring(0, templates[i].length() - KEY_TEMPLATE.length()) + KEY_LABELER_TEMPLATE;
+        }
+
+        return labelerTemplates;
+    }
+
+    public static String[] defaultLabelerTemplates() {
+        List<String> templates = new ArrayList<String>();
+
+        // templates.scaffolding.LabelerTemplate
+        templates.add(dot(DEFAULT_APPLICATION_TEMPLATE_PATH, KEY_LABELER_TEMPLATE));
+        // griffon.plugins.scaffolding.LabelerTemplate
+        templates.add(dot(DEFAULT_TEMPLATE_PATH, KEY_LABELER_TEMPLATE));
 
         return templates.toArray(new String[templates.size()]);
     }

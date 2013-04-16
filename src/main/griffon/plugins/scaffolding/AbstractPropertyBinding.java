@@ -16,6 +16,7 @@
 
 package griffon.plugins.scaffolding;
 
+import griffon.core.UIThreadManager;
 import griffon.core.resources.editors.ExtendedPropertyEditor;
 import griffon.core.resources.editors.PropertyEditorResolver;
 import griffon.core.resources.editors.ValueConversionException;
@@ -73,7 +74,7 @@ public abstract class AbstractPropertyBinding implements Disposable {
                     targetValue = ((ExtendedPropertyEditor) targetEditor).getFormattedValue();
                 }
                 sourceEditor.setValue(targetValue);
-                setSourcePropertyValue(sourceEditor.getValue());
+                applySourcePropertyValue(sourceEditor.getValue());
             } catch (ValueConversionException e) {
                 if (LOG.isTraceEnabled()) {
                     LOG.trace("Could not update target property '" + constrainedProperty.getPropertyName() + "'", sanitize(e));
@@ -143,5 +144,13 @@ public abstract class AbstractPropertyBinding implements Disposable {
         } catch (NoSuchMethodException e) {
             throw new GriffonException(e);
         }
+    }
+
+    private void applySourcePropertyValue(final Object value) {
+        UIThreadManager.getInstance().executeAsync(new Runnable() {
+            public void run() {
+                setSourcePropertyValue(value);
+            }
+        });
     }
 }

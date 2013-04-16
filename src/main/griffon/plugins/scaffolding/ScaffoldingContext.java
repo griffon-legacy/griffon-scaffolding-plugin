@@ -47,6 +47,7 @@ public class ScaffoldingContext implements Disposable {
     private Validateable validateable;
 
     private final Map<String, Class> widgetTemplates = new LinkedHashMap<String, Class>();
+    private final Map<String, Class> labelerTemplates = new LinkedHashMap<String, Class>();
     private final List<Disposable> disposables = new ArrayList<Disposable>();
     private final Map<String, String> errorCodes = new TreeMap<String, String>();
 
@@ -117,6 +118,55 @@ public class ScaffoldingContext implements Disposable {
         return ScaffoldingUtils.resolveMessage(controller, actionName, validateable, key, defaultValue);
     }
 
+    public Class resolveLabeler(String property) {
+        Class labelerTemplate = labelerTemplates.get(property);
+
+        if (labelerTemplate == null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Resolving labeler template for " + qualify(property));
+            }
+            ConstrainedProperty constrainedProperty = validateable.constrainedProperties().get(property);
+            if (!isBlank(constrainedProperty.getWidget())) {
+                labelerTemplate = resolveLabelerTemplateByWidget(constrainedProperty);
+            }
+
+            if (labelerTemplate == null) {
+                labelerTemplate = resolveLabelerTemplateByProperty(property);
+            }
+
+            if (labelerTemplate == null) {
+                labelerTemplate = resolveLabelerTemplateByDefault();
+            }
+
+            if (labelerTemplate == null) {
+                if (LOG.isWarnEnabled()) {
+                    LOG.warn("  Could not resolve a suitable labeler template for " + qualify(property));
+                }
+                throw new IllegalArgumentException("Could not resolve a suitable labeler template for " + qualify(property));
+            } else if (LOG.isDebugEnabled()) {
+                LOG.debug("Resolved labeler template for " + qualify(property) + " is " + labelerTemplate.getName());
+            }
+            labelerTemplates.put(property, labelerTemplate);
+        }
+
+        return labelerTemplate;
+    }
+
+    private Class resolveLabelerTemplateByWidget(ConstrainedProperty constrainedProperty) {
+        String[] templates = ScaffoldingUtils.widgetLabelerTemplates(controller, actionName, validateable, constrainedProperty.getWidget());
+        return resolveTemplate(templates);
+    }
+
+    private Class resolveLabelerTemplateByProperty(String property) {
+        String[] templates = ScaffoldingUtils.propertyLabelerTemplates(controller, actionName, validateable, property);
+        return resolveTemplate(templates);
+    }
+
+    private Class resolveLabelerTemplateByDefault() {
+        String[] templates = ScaffoldingUtils.defaultLabelerTemplates();
+        return resolveTemplate(templates);
+    }
+
     public Class resolveWidget(String property) {
         Class widgetTemplate = widgetTemplates.get(property);
 
@@ -152,101 +202,34 @@ public class ScaffoldingContext implements Disposable {
     }
 
     private Class resolveWidgetTemplateByWidget(ConstrainedProperty constrainedProperty) {
-        Class widgetTemplate = null;
-
-        // attempt i18n resolution first
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("  [I18N]");
-        }
-        for (String resourceKey : ScaffoldingUtils.widgetTemplates(controller, actionName, validateable, constrainedProperty.getWidget())) {
-            try {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("  Resolving " + resourceKey);
-                }
-                String widgetTemplateClassName = getController().getApp().getMessage(resourceKey);
-                widgetTemplate = ApplicationClassLoader.get().loadClass(widgetTemplateClassName);
-                break;
-            } catch (Exception e) {
-                // continue
-            }
-        }
-
-        // attempt direct class load
-        if (widgetTemplate == null) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("  [CLASS]");
-            }
-            for (String widgetName : ScaffoldingUtils.widgetTemplates(controller, actionName, validateable, constrainedProperty.getWidget())) {
-                try {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("  Resolving " + widgetName);
-                    }
-                    widgetTemplate = ApplicationClassLoader.get().loadClass(widgetName);
-                    break;
-                } catch (Exception e) {
-                    // continue
-                }
-            }
-        }
-
-        return widgetTemplate;
+        String[] templates = ScaffoldingUtils.widgetTemplates(controller, actionName, validateable, constrainedProperty.getWidget());
+        return resolveTemplate(templates);
     }
 
     private Class resolveWidgetTemplateByProperty(String property) {
-        Class widgetTemplate = null;
-
-        // attempt i18n resolution first
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("  [I18N]");
-        }
-        for (String resourceKey : ScaffoldingUtils.propertyTemplates(controller, actionName, validateable, property)) {
-            try {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("  Resolving " + resourceKey);
-                }
-                String widgetTemplateClassName = getController().getApp().getMessage(resourceKey);
-                widgetTemplate = ApplicationClassLoader.get().loadClass(widgetTemplateClassName);
-                break;
-            } catch (Exception e) {
-                // continue
-            }
-        }
-
-        // attempt direct class load
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("  [CLASS]");
-        }
-        if (widgetTemplate == null) {
-            for (String widgetName : ScaffoldingUtils.propertyTemplates(controller, actionName, validateable, property)) {
-                try {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("  Resolving " + widgetName);
-                    }
-                    widgetTemplate = ApplicationClassLoader.get().loadClass(widgetName);
-                    break;
-                } catch (Exception e) {
-                    // continue
-                }
-            }
-        }
-
-        return widgetTemplate;
+        String[] templates = ScaffoldingUtils.propertyTemplates(controller, actionName, validateable, property);
+        return resolveTemplate(templates);
     }
 
     private Class resolveWidgetTemplateByUnknown() {
-        Class widgetTemplate = null;
+        String[] templates = ScaffoldingUtils.unknownWidgetTemplates();
+        return resolveTemplate(templates);
+    }
+
+    private Class resolveTemplate(String[] templates) {
+        Class labelerTemplate = null;
 
         // attempt i18n resolution first
         if (LOG.isDebugEnabled()) {
             LOG.debug("  [I18N]");
         }
-        for (String resourceKey : ScaffoldingUtils.unknownWidgetTemplates()) {
+        for (String resourceKey : templates) {
             try {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("  Resolving " + resourceKey);
                 }
                 String widgetTemplateClassName = getController().getApp().getMessage(resourceKey);
-                widgetTemplate = ApplicationClassLoader.get().loadClass(widgetTemplateClassName);
+                labelerTemplate = ApplicationClassLoader.get().loadClass(widgetTemplateClassName);
                 break;
             } catch (Exception e) {
                 // continue
@@ -254,16 +237,16 @@ public class ScaffoldingContext implements Disposable {
         }
 
         // attempt direct class load
-        if (widgetTemplate == null) {
+        if (labelerTemplate == null) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("  [CLASS]");
             }
-            for (String widgetName : ScaffoldingUtils.unknownWidgetTemplates()) {
+            for (String widgetName : templates) {
                 try {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("  Resolving " + widgetName);
                     }
-                    widgetTemplate = ApplicationClassLoader.get().loadClass(widgetName);
+                    labelerTemplate = ApplicationClassLoader.get().loadClass(widgetName);
                     break;
                 } catch (Exception e) {
                     // continue
@@ -271,40 +254,65 @@ public class ScaffoldingContext implements Disposable {
             }
         }
 
-        return widgetTemplate;
+        return labelerTemplate;
     }
 
     public String[] resolveErrorMessages() {
-        List<String> errors = new ArrayList<String>();
-
+        List<String> errorList = new ArrayList<String>();
         for (ObjectError error : validateable.getErrors().getAllErrors()) {
-            String errorKey = errorKey(error);
-            String errorCode = errorCodes.get(errorKey);
-            if (!isBlank(errorCode)) {
-                errors.add(controller.getApp().formatMessage(errorCode, error.getArguments()));
-                continue;
-            }
+            resolveErrorMessages(error, errorList);
+        }
+        return errorList.toArray(new String[errorList.size()]);
+    }
 
-            boolean messageResolved = false;
-            for (String code : error.getCodes()) {
-                try {
-                    String message = controller.getApp().getMessage(code, error.getArguments());
-                    errors.add(message);
-                    errorCodes.put(errorKey, code);
-                    messageResolved = true;
-                    break;
-                } catch (NoSuchMessageException e) {
-                    // continue;
-                }
-            }
-            if (!messageResolved) {
-                errors.add(controller.getApp().formatMessage(error.getDefaultMessage(), error.getArguments()));
-                errorCodes.put(errorKey, error.getDefaultMessage());
-            }
+    public String[] resolveFieldErrorMessages(List<FieldObjectError> errors) {
+        List<String> errorList = new ArrayList<String>();
+        for (ObjectError error : errors) {
+            resolveErrorMessages(error, errorList);
+        }
+        return errorList.toArray(new String[errorList.size()]);
+    }
+
+    public String[] resolveErrorMessages(List<ObjectError> errors) {
+        List<String> errorList = new ArrayList<String>();
+        for (ObjectError error : errors) {
+            resolveErrorMessages(error, errorList);
+        }
+        return errorList.toArray(new String[errorList.size()]);
+    }
+
+    public String[] resolveErrorMessages(ObjectError error) {
+        List<String> errorList = new ArrayList<String>();
+        resolveErrorMessages(error, errorList);
+        return errorList.toArray(new String[errorList.size()]);
+    }
+
+    private void resolveErrorMessages(ObjectError error, List<String> errors) {
+        String errorKey = errorKey(error);
+        String errorCode = errorCodes.get(errorKey);
+        if (!isBlank(errorCode)) {
+            errors.add(controller.getApp().formatMessage(errorCode, error.getArguments()));
+            return;
         }
 
-        return errors.toArray(new String[errors.size()]);
+        boolean messageResolved = false;
+        for (String code : error.getCodes()) {
+            try {
+                String message = controller.getApp().getMessage(code, error.getArguments());
+                errors.add(message);
+                errorCodes.put(errorKey, code);
+                messageResolved = true;
+                break;
+            } catch (NoSuchMessageException e) {
+                // continue;
+            }
+        }
+        if (!messageResolved) {
+            errors.add(controller.getApp().formatMessage(error.getDefaultMessage(), error.getArguments()));
+            errorCodes.put(errorKey, error.getDefaultMessage());
+        }
     }
+
 
     private String qualify() {
         return qualifyActionValidatable(controller, actionName, validateable);
