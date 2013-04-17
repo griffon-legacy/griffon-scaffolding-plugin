@@ -29,6 +29,10 @@ public class DateValue extends AbstractAtomicValue implements NumericAtomicValue
         setValue(arg);
     }
 
+    public DateValue(Calendar arg) {
+        setValue(arg);
+    }
+
     public DateValue(Number arg) {
         setValue(arg);
     }

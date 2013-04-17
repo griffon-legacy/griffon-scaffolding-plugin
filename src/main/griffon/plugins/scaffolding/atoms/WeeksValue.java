@@ -15,52 +15,41 @@
  */
 package griffon.plugins.scaffolding.atoms;
 
-import java.util.Calendar;
-import java.util.Date;
+import org.joda.time.Weeks;
+
+import static java.lang.Math.abs;
 
 /**
  * @author Andres Almiray
  */
-public class CalendarValue extends AbstractAtomicValue implements NumericAtomicValue {
-    public CalendarValue() {
+public class WeeksValue extends AbstractAtomicValue {
+    public WeeksValue() {
     }
 
-    public CalendarValue(Calendar arg) {
+    public WeeksValue(Weeks arg) {
         setValue(arg);
     }
 
-    public CalendarValue(Date arg) {
+    public WeeksValue(Number arg) {
         setValue(arg);
     }
 
-    public CalendarValue(Number arg) {
-        setValue(arg);
-    }
-
-    public Calendar calendarValue() {
-        return (Calendar) value;
+    public Weeks weeksValue() {
+        return (Weeks) value;
     }
 
     @Override
     public void setValue(Object value) {
-        if (value == null || value instanceof Calendar) {
+        if (value == null || value instanceof Weeks) {
             super.setValue(value);
-        } else if (value instanceof Date) {
-            Calendar c = Calendar.getInstance();
-            c.setTime((Date) value);
-            super.setValue(c);
         } else if (value instanceof Number) {
-            Date d = new Date();
-            d.setTime(((Number) value).longValue());
-            Calendar c = Calendar.getInstance();
-            c.setTime(d);
-            super.setValue(c);
+            super.setValue(Weeks.weeks(abs(((Number) value).intValue())));
         } else {
             throw new IllegalArgumentException("Invalid value " + value);
         }
     }
 
     public Class getValueType() {
-        return Calendar.class;
+        return Weeks.class;
     }
 }

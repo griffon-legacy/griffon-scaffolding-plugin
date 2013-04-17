@@ -26,6 +26,7 @@ import griffon.plugins.validation.Validateable;
 import griffon.plugins.validation.constraints.ConstrainedProperty;
 import griffon.util.*;
 import groovy.util.ConfigObject;
+import org.joda.time.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,7 +82,21 @@ public final class ScaffoldingUtils {
         .e(Float.TYPE, FloatValue.class)
         .e(Integer.TYPE, IntegerValue.class)
         .e(Long.TYPE, LongValue.class)
-        .e(Short.TYPE, ShortValue.class);
+        .e(Short.TYPE, ShortValue.class)
+        .e(DateTime.class, DateTimeValue.class)
+        .e(DateTimeZone.class, DateTimeZoneValue.class)
+        .e(LocalDate.class, LocalDateValue.class)
+        .e(LocalDateTime.class, LocalDateTimeValue.class)
+        .e(LocalTime.class, LocalTimeValue.class)
+        .e(Instant.class, InstantValue.class)
+        .e(Years.class, YearsValue.class)
+        .e(Months.class, MonthsValue.class)
+        .e(Weeks.class, WeeksValue.class)
+        .e(Days.class, DaysValue.class)
+        .e(Hours.class, HoursValue.class)
+        .e(Minutes.class, MinutesValue.class)
+        .e(Seconds.class, SecondsValue.class)
+        .e(Duration.class, DurationValue.class);
 
     public static Map<Class, Class> initializeAtomTypes() {
         Enumeration<URL> urls = null;

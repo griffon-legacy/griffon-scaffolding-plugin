@@ -15,52 +15,41 @@
  */
 package griffon.plugins.scaffolding.atoms;
 
-import java.util.Calendar;
-import java.util.Date;
+import org.joda.time.Years;
+
+import static java.lang.Math.abs;
 
 /**
  * @author Andres Almiray
  */
-public class CalendarValue extends AbstractAtomicValue implements NumericAtomicValue {
-    public CalendarValue() {
+public class YearsValue extends AbstractAtomicValue {
+    public YearsValue() {
     }
 
-    public CalendarValue(Calendar arg) {
+    public YearsValue(Years arg) {
         setValue(arg);
     }
 
-    public CalendarValue(Date arg) {
+    public YearsValue(Number arg) {
         setValue(arg);
     }
 
-    public CalendarValue(Number arg) {
-        setValue(arg);
-    }
-
-    public Calendar calendarValue() {
-        return (Calendar) value;
+    public Years yearsValue() {
+        return (Years) value;
     }
 
     @Override
     public void setValue(Object value) {
-        if (value == null || value instanceof Calendar) {
+        if (value == null || value instanceof Years) {
             super.setValue(value);
-        } else if (value instanceof Date) {
-            Calendar c = Calendar.getInstance();
-            c.setTime((Date) value);
-            super.setValue(c);
         } else if (value instanceof Number) {
-            Date d = new Date();
-            d.setTime(((Number) value).longValue());
-            Calendar c = Calendar.getInstance();
-            c.setTime(d);
-            super.setValue(c);
+            super.setValue(Years.years(abs(((Number) value).intValue())));
         } else {
             throw new IllegalArgumentException("Invalid value " + value);
         }
     }
 
     public Class getValueType() {
-        return Calendar.class;
+        return Years.class;
     }
 }

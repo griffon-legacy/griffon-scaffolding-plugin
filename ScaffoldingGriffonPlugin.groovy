@@ -23,7 +23,10 @@ class ScaffoldingGriffonPlugin {
     // the version or versions of Griffon the plugin is designed for
     String griffonVersion = '1.3.0 > *'
     // the other plugins this plugin depends on
-    Map dependsOn = [domain: '0.1.0']
+    Map dependsOn = [
+        domain  : '0.1.0',
+        jodatime: '0.1.0'
+    ]
     // resources that are included in plugin packaging
     List pluginIncludes = []
     // the plugin license

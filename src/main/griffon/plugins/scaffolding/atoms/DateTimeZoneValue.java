@@ -15,52 +15,47 @@
  */
 package griffon.plugins.scaffolding.atoms;
 
-import java.util.Calendar;
-import java.util.Date;
+import org.joda.time.DateTimeZone;
+
+import java.util.TimeZone;
 
 /**
  * @author Andres Almiray
  */
-public class CalendarValue extends AbstractAtomicValue implements NumericAtomicValue {
-    public CalendarValue() {
+public class DateTimeZoneValue extends AbstractAtomicValue implements NumericAtomicValue {
+    public DateTimeZoneValue() {
     }
 
-    public CalendarValue(Calendar arg) {
+    public DateTimeZoneValue(DateTimeZone arg) {
         setValue(arg);
     }
 
-    public CalendarValue(Date arg) {
+    public DateTimeZoneValue(TimeZone arg) {
         setValue(arg);
     }
 
-    public CalendarValue(Number arg) {
+    public DateTimeZoneValue(CharSequence arg) {
         setValue(arg);
     }
 
-    public Calendar calendarValue() {
-        return (Calendar) value;
+    public DateTimeZone dateTimeZoneValue() {
+        return (DateTimeZone) value;
     }
 
     @Override
     public void setValue(Object value) {
-        if (value == null || value instanceof Calendar) {
+        if (value == null || value instanceof DateTimeZone) {
             super.setValue(value);
-        } else if (value instanceof Date) {
-            Calendar c = Calendar.getInstance();
-            c.setTime((Date) value);
-            super.setValue(c);
-        } else if (value instanceof Number) {
-            Date d = new Date();
-            d.setTime(((Number) value).longValue());
-            Calendar c = Calendar.getInstance();
-            c.setTime(d);
-            super.setValue(c);
+        } else if (value instanceof TimeZone) {
+            super.setValue(DateTimeZone.forTimeZone((TimeZone) value));
+        } else if (value instanceof CharSequence) {
+            super.setValue(DateTimeZone.forID(value.toString()));
         } else {
             throw new IllegalArgumentException("Invalid value " + value);
         }
     }
 
     public Class getValueType() {
-        return Calendar.class;
+        return DateTimeZone.class;
     }
 }
