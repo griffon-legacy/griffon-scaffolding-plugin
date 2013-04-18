@@ -15,10 +15,7 @@
  */
 package griffon.plugins.scaffolding.atoms;
 
-import org.joda.time.DateMidnight;
-import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
-import org.joda.time.LocalDateTime;
+import org.joda.time.*;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -34,6 +31,14 @@ public class LocalDateValue extends AbstractAtomicValue implements NumericAtomic
         setValue(arg);
     }
 
+    public LocalDateValue(DateMidnight arg) {
+        setValue(arg);
+    }
+
+    public LocalDateValue(Instant arg) {
+        setValue(arg);
+    }
+
     public LocalDateValue(LocalDate arg) {
         setValue(arg);
     }
@@ -42,7 +47,7 @@ public class LocalDateValue extends AbstractAtomicValue implements NumericAtomic
         setValue(arg);
     }
 
-    public LocalDateValue(DateMidnight arg) {
+    public LocalDateValue(Calendar arg) {
         setValue(arg);
     }
 
@@ -64,10 +69,12 @@ public class LocalDateValue extends AbstractAtomicValue implements NumericAtomic
             super.setValue(value);
         } else if (value instanceof DateTime) {
             super.setValue(((DateTime) value).toLocalDate());
-        } else if (value instanceof LocalDateTime) {
-            super.setValue(((LocalDateTime) value).toLocalDate());
         } else if (value instanceof DateMidnight) {
             super.setValue(((DateMidnight) value).toLocalDate());
+        } else if (value instanceof Instant) {
+            super.setValue(((Instant) value).toDateTime().toLocalDate());
+        } else if (value instanceof LocalDateTime) {
+            super.setValue(((LocalDateTime) value).toLocalDate());
         } else if (value instanceof Calendar || value instanceof Date) {
             super.setValue(new LocalDate(value));
         } else if (value instanceof Number) {

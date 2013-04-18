@@ -31,11 +31,15 @@ public class LocalDateTimeValue extends AbstractAtomicValue implements NumericAt
         setValue(arg);
     }
 
-    public LocalDateTimeValue(LocalDate arg) {
+    public LocalDateTimeValue(DateMidnight arg) {
         setValue(arg);
     }
 
-    public LocalDateTimeValue(LocalTime arg) {
+    public LocalDateTimeValue(Instant arg) {
+        setValue(arg);
+    }
+
+    public LocalDateTimeValue(LocalDate arg) {
         setValue(arg);
     }
 
@@ -43,7 +47,7 @@ public class LocalDateTimeValue extends AbstractAtomicValue implements NumericAt
         setValue(arg);
     }
 
-    public LocalDateTimeValue(DateMidnight arg) {
+    public LocalDateTimeValue(Calendar arg) {
         setValue(arg);
     }
 
@@ -65,10 +69,12 @@ public class LocalDateTimeValue extends AbstractAtomicValue implements NumericAt
             super.setValue(value);
         } else if (value instanceof DateTime) {
             super.setValue(((DateTime) value).toLocalDateTime());
-        } else if (value instanceof LocalDate) {
-            super.setValue(((LocalDate) value).toDateTimeAtStartOfDay().toLocalDateTime());
         } else if (value instanceof DateMidnight) {
             super.setValue(((DateMidnight) value).toDateTime().toLocalDateTime());
+        } else if (value instanceof Instant) {
+            super.setValue(((Instant) value).toDateTime().toLocalDateTime());
+        } else if (value instanceof LocalDate) {
+            super.setValue(((LocalDate) value).toDateTimeAtStartOfDay().toLocalDateTime());
         } else if (value instanceof Calendar || value instanceof Date) {
             super.setValue(new LocalDateTime(value));
         } else if (value instanceof Number) {

@@ -31,6 +31,14 @@ public class DateTimeValue extends AbstractAtomicValue implements NumericAtomicV
         setValue(arg);
     }
 
+    public DateTimeValue(DateMidnight arg) {
+        setValue(arg);
+    }
+
+    public DateTimeValue(Instant arg) {
+        setValue(arg);
+    }
+
     public DateTimeValue(LocalDate arg) {
         setValue(arg);
     }
@@ -40,10 +48,6 @@ public class DateTimeValue extends AbstractAtomicValue implements NumericAtomicV
     }
 
     public DateTimeValue(LocalTime arg) {
-        setValue(arg);
-    }
-
-    public DateTimeValue(DateMidnight arg) {
         setValue(arg);
     }
 
@@ -63,14 +67,16 @@ public class DateTimeValue extends AbstractAtomicValue implements NumericAtomicV
     public void setValue(Object value) {
         if (value == null || value instanceof DateTime) {
             super.setValue(value);
+        } else if (value instanceof DateMidnight) {
+            super.setValue(((DateMidnight) value).toDateTime());
+        } else if (value instanceof Instant) {
+            super.setValue(((Instant) value).toDateTime());
         } else if (value instanceof LocalDate) {
             super.setValue(((LocalDate) value).toDateTimeAtStartOfDay());
         } else if (value instanceof LocalDateTime) {
             super.setValue(((LocalDateTime) value).toDateTime());
         } else if (value instanceof LocalTime) {
             super.setValue(((LocalTime) value).toDateTimeToday());
-        } else if (value instanceof DateMidnight) {
-            super.setValue(((DateMidnight) value).toDateTime());
         } else if (value instanceof Calendar || value instanceof Date) {
             super.setValue(new DateTime(value));
         } else if (value instanceof Number) {
