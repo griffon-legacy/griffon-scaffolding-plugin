@@ -168,7 +168,6 @@ public final class ScaffoldingUtils {
     }
 
     private ScaffoldingUtils() {
-
     }
 
     public static String[] mvcMemberCodes(GriffonController controller, String actionName, Validateable validateable, String suffix) {

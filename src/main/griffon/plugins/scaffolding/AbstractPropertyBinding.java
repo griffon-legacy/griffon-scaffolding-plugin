@@ -66,14 +66,8 @@ public abstract class AbstractPropertyBinding implements Disposable {
             if (firing) return;
             firing = true;
             try {
-                PropertyEditor targetEditor = resolveTargetPropertyEditor();
                 PropertyEditor sourceEditor = resolveSourcePropertyEditor();
-                targetEditor.setValue(getTargetPropertyValue());
-                Object targetValue = targetEditor.getValue();
-                if (targetEditor instanceof ExtendedPropertyEditor) {
-                    targetValue = ((ExtendedPropertyEditor) targetEditor).getFormattedValue();
-                }
-                sourceEditor.setValue(targetValue);
+                sourceEditor.setValue(getTargetPropertyValue());
                 applySourcePropertyValue(sourceEditor.getValue());
             } catch (ValueConversionException e) {
                 if (LOG.isTraceEnabled()) {

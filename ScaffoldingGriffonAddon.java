@@ -15,16 +15,22 @@
  */
 
 import griffon.plugins.scaffolding.ScaffoldingUtils;
+import griffon.plugins.scaffolding.editors.CalendarPropertyEditor;
+import griffon.plugins.scaffolding.editors.DatePropertyEditor;
 import griffon.util.ApplicationHolder;
 import griffon.util.CollectionUtils;
 import org.codehaus.griffon.runtime.core.AbstractGriffonAddon;
 import org.codehaus.griffon.runtime.scaffolding.ScaffoldingGriffonControllerActionInterceptor;
 
+import java.util.Calendar;
+import java.util.Date;
+
+import static java.beans.PropertyEditorManager.registerEditor;
+
 /**
  * @author Andres Almiray
  */
 public class ScaffoldingGriffonAddon extends AbstractGriffonAddon {
-
     public ScaffoldingGriffonAddon() {
         super(ApplicationHolder.getApplication());
 
@@ -35,5 +41,8 @@ public class ScaffoldingGriffonAddon extends AbstractGriffonAddon {
         );
 
         ScaffoldingUtils.initializeAtomTypes();
+
+        registerEditor(Date.class, DatePropertyEditor.class);
+        registerEditor(Calendar.class, CalendarPropertyEditor.class);
     }
 }
